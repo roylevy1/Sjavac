@@ -1,0 +1,276 @@
+roy.levy3
+sharonbash
+
+==============================================================================================================
+=  File Description   ex6                                                                                    =
+==============================================================================================================
+see packages
+==============================================================================================================
+=  Design                                                                                                    =
+==============================================================================================================
+Modularity:
+i try to make the system the modularity as possible that can be, we can see that by the hierarchy
+its easy to add more items such variables loops etc..
+also this modularity make the future changes more easy to do
+we got factory for each object inside th package (except Package Compiler and language),
+
+==============================================================================================================
+=       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ PACKAGES ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~        =
+==============================================================================================================
+Package Main:
+=============
+Sjavac - main class of our system
+Factory- interface that all the factories except FactoryBuilder should implement
+FactoryBuilder - create all the compiler factories and collect them keywords.
+ his real job should be in the future of the system.
+Symbol- this is abstract class that all object in our system inherent form that.
+SymbolBasic- interface that all the Symbol object need to implement
+
+
+Package Compiler:
+===================
+in this package we got all the "main" classes of the compiler, it create the compiler and start to compile the
+file we want to compile( by read his lines, method, loops...)
+hierarchy:
+----------
+Compiler <-- Line
+   |     <-- Section <-- Method <-- ParameterList
+   |                 <-- Loop   <-- Condition
+FileRead(compiler use FileRead)
+
+Package language:
+===================
+this package hold data that is common of all objects in our system
+keywords:  All the keywords txt that we have.
+Const:     const value that we have
+Message:   all the output massage that we have
+Regex:     all regular expressions that we use
+
+Package Variables:
+===================
+in this package we got all the variables classes and method that we have in our compiler system.
+hierarchy:
+----------
+Variable<-- Boolean, Char, Double, Int, String, Void
+
+VariableFactory - create a variable object(such as Boolean, Int ...) from a string
+every variable except Void has: Parent, Name, Value, FinalValue and can use as variable and cant use as method
+Void has: Name, FinalValue and cant use as variable and can use as method
+
+Package Operators:
+===================
+in this package we got all the operators classes that we have in our compiler system.
+hierarchy:
+----------
+Operator <-- Assigned
+         <-- Logic    <-- And, Or
+
+OperatorFactory - create a operator object that isn't Logic Operator from a string
+LogicFactory    - create a operator object that is a Logic Operator from a string
+the operator use to do operation on variables(such as assigned value to var)
+ and create the condition in case they logic operators
+
+
+Package modifiers:
+===================
+in this package we got all the modifiers that classes that we have in our compiler system.
+hierarchy:
+----------
+Modifier <-- Final
+
+ModifierFactory - create a modifier object from a string
+The modifier use to define the access to a variable/ method
+
+Package loops:
+===================
+in this package we got all the loops that classes that we have in our compiler system.
+hierarchy:
+----------
+Loop <-- If, While
+
+LoopFactory - create a loop object from a string
+The loop use to define a loop object
+* i wanted to merge the compiler/Loop with this package like the use of variable(Void) in method
+(to hold the condition inside them), but i have no more strength for that,
+so i left it so in the future it could be use as i wanted.
+
+Package keywords:
+===================
+in this package we got all the keywords Classes that we have in our compiler system.
+hierarchy:
+----------
+Keyword <-- False, True, Return
+        <-- Bracket <-- BracesLeft, BracesRight, ParenthesesLeft, ParenthesesRight
+        <-- Comment <-- CommentLine
+        <-- Mark    <-- Semicolon, Comma
+
+KeywordFactory - create a keyword object from a string
+CommentFactory - create a Comment object from a string
+BracketFactory - create a bracket object from a string
+MarkFactory    - create a mark object from a string
+The Keyword use to to get all the object keywords(in keyLoader inside Sjavac)
+and i create them as object (and not use them like in language/Keywords, cos in the future we could use them
+ in our system)
+
+Package exceptions:
+===================
+in this package we got all the exceptions that we have in our compiler system.
+hierarchy:
+----------
+(#word) - represent a package
+SystemGeneralError <-- (#compiler) GeneralError <-- CantCreateLine, CantCreateMethod,CantCreateSection,
+                                                                    CantReadCommend, NumberOfElementLow
+
+                   <-- (#factories) GeneralError <-- NotFound, NullPointer
+                   <-- (#file) GeneralError <-- CantCloseFile, IOProblem, NotFound, NullPointer,
+                                                                                IllegalArgsNumber
+                   <-- (#keywords) GeneralError <-- NotFound, NullPointer
+                                                <-- (#brackets) GeneralError <-- NotFound, NullPointer
+                                                <-- (#comments) GeneralError <-- NotFound, NullPointer
+                                                <-- (#marks)    GeneralError <-- NotFound, NullPointer
+                   <-- (#loops) GeneralError <-- NotFound, NullPointer
+                   <-- (#modifiers) GeneralError <-- NotFound, NullPointer, FinalMustAssigned
+                   <-- (#operators) GeneralError <-- NotFound, NullPointer, CantAssigned
+                   <-- (#sections) GeneralError  <-- NotFound, BracketNotFound, RightBracesNotFound,
+                                                                                  SemicolonNotFound
+                                                 <-- (#conditions) GeneralError <-- CantCreateCondition,
+                                                                                      CantHandleAndLogic
+                                                                                      NumberOfElementLow
+                                                 <-- (#lines) GeneralError <-- AssignedVariableFail,
+                                                                               CantCreateMultiVariableInLine
+                                                                               LineWithModifierAndVarTypeFail
+                                                                               LineWithOnlyVarTypeFail
+                                                                               MethodCallFail,   IllegalLine
+                                                 <-- (#parameterList) GeneralError <-- BadNumberOfParameters,
+                   <-- (#variables) GeneralError <-- CantCastingNotBoolean, IllegalVariableName, NotFound,
+                                                      IllegalVariableValue, MethodNotAllowed, NullPointer
+                                                      VariableAlreadyExist, VariableNotAllowed
+in this hierarchy i can catch any exception and use polymorphism with this internet
+
+
+==============================================================================================================
+=  Implementation                                                                                            =
+==============================================================================================================
+Package language- i create this package for easy use in the system, it prevent copy of const, also it very
+clean and clear way to change values.
+in the future it can use with Enum to chose language for outPut messages, but i don't have the strength to
+create configuration file for that.
+
+We choose to implement the compiler that every Compiler, Condition, Line, Loop, Method, ParameterList
+ and Section has parent, so its help us to control the object that way.
+
+Before we start to compile the file, i reorder his Global variables that they will be before the sections,
+i did that in the file FileRead. also we read the all method before we start to run on the file.
+
+main logic graph:
+=================
+read and order file --> Error? --> Error(Type 2)
+|
+|
+V
+compiler-->
+            read line --> start a comment? --> pass it not important
+                          start a line?    --> declare Variable? --> create new variable if not exist and add
+                                                                        to his parent variables stack
+                                               call a method? --> check if method exist,
+                                                                  parameterList type and number compatible.
+                                               assigned variable? --> find it and do it
+                                               all the Error we got throw[so we will getError(Type 1)]
+                          start a section? --> method? --> create if not exist --> create parameter list
+                                                           and add method to method parent stack
+                                                           and add parameter to parameter stack
+                                               loop? -->  create ---> create condition and add it to his
+                                                                                                  parent(loop)
+                                               all the Error we got throw[so we will getError(Type 1)]
+                          else --> throw Error
+            collect the Error(Type 1)
+            and throw them
+            catch Error(Type 1)-->
+                and print output 1 and the printStackTrace(with causes) + messages
+                meaning that compile file has fail.
+            catch Error(Type 2)-->
+                and print output 1 and the printStackTrace(with causes)
+                meaning that compile read file has fail.
+            catch unknown Error-->
+                print printStackTrace(with causes) + messages
+                meaning its bad if u got there cos those are unexpected Errors
+==============================================================================================================
+=  Questions                                                                                                 =
+==============================================================================================================
+6.1   how you handled s-Java code errors in this exercise
+A. see Exceptions for more detail.
+in short there are package inside the the exceptions(recursive= package inside package inside package...),
+ every package has the exception GeneralError that all other exceptions that inside the package inherent
+ from it. (in recursive cases u can find GeneralError the inherent from GeneralError)
+ and all the Exceptions inherent from SystemGeneralError
+
+6.2.1 How would you modify your code to add new types of variables (e.g., float)?
+A. u need to do is:
+    - create new class inside variable in the name such as 'float'
+    - add her name to language/Keywords
+    - add her inside the VariableFactory
+6.2.2 describe which modifications/extensions you would have to make in your code
+      in order to support them:
+        a. Classes.
+        b. Different methods’ types (i.e int foo())
+        c. Using methods of standart java (i.e System.out.println).
+        d. Inheritage of files (just like class inheritage, so virtual functions can appear, and a
+         sub-file may use a method from a parent file).
+a. just warp the "compiler" class with the new Class that called - Classes.
+meaning you need to create change it that the classes inherent from compiler and all other classes that use to
+inherent from the compiler will inherent from her instead. and now u got the hierarchy:
+
+Compiler <-- Classes <-- Line
+                     <-- Section <-- Method <-- ParameterList
+                                 <-- Loop   <-- Condition
+so now the compiler has new file that contain the classes.
+and classes got the old compiler file + add his specific methods
+
+b. let separate that to 3 cases.
+    - if we want that all variable would be use as method:
+    then in the abstract class Variable change
+                this.setUseAsMethod(false);             to                     this.setUseAsMethod(true);
+                and add to checkValidName the checkValidName that inside Void
+
+    - if we want specific variable as method:
+        inherent the class Variable change
+        and change
+                this.setUseAsMethod(false);             to                     this.setUseAsMethod(true);
+                and add to checkValidName the checkValidName that inside Void
+
+    - if we want to create a new type of method that cant use as variable[like void]:
+        just add it like in the Void class
+
+Notice- variable that can use only as Method has no parents!
+
+c. 3 options:
+ - add them in new package as methods of standart java inside variable that it inherent from it.
+  then add the option to use
+ them in the file Line in the code of methodCallInLine. and should work
+
+ - create new package of methods and then move void to them, and cancel setUseAsMethod from variables objects.
+ and u need now to adjust the code that create the method to this new package
+
+ - mix between option 1 and 2, meaning, leave the package variable as it- u can create method that are
+ variables
+ and create new package of methods and u need now to adjust the code that create the method to this
+ new package
+
+ the option 3 i think is the best for good hierarchy
+
+
+d. just add this option into Classes that we mention in a and you should be good
+(classes can inherent from classes like my section that can inherent from section)
+
+
+6.3 please describe two of the main regular expressions you used in your code
+ - check String Value     ^\"[^/',\"]*\"$
+ this regular expressions check if the pattern start with " then it check if we got 0 time and more
+ the characters that are NOT /'," then it check that the pattern end with "
+
+ - check Var Name ^([_]\w+|[a-zA-Z]+\w*)$
+ this regular expressions check
+  if the pattern start with _ and has at least one letter/digit/underScore that the pattern end with it
+ or
+ if the pattern start with a letter from a-z or letter from A-Z one time and more,
+ and it got more letter/digit/underScore that the pattern end with it
